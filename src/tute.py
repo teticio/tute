@@ -1,11 +1,5 @@
 # https://www.ludoteka.com/clasika/tute-habanero.html
 
-# TODO:
-# scoring
-# los cantes
-# 10 points for last trick
-# player can know suit, trump (+ swaps), tricks, his hand, cantes
-
 import os
 import logging
 
@@ -320,11 +314,13 @@ class Tute:
                             & ((hand.value == 11) | (hand.value == 12))]) == 2
 
         hand = self.get_hand(player)
-        if len(self.cantes) == 0 and _have_caballo_and_rey(hand, self.trump_suit):
+        if len(self.cantes) == 0 and _have_caballo_and_rey(
+                hand, self.trump_suit):
             self.cantes[self.trump_suit] = player
-            logging.info(f'Player {player + 1} canta {self.suits[self.trump_suit]}')
+            logging.info(
+                f'Player {player + 1} canta {self.suits[self.trump_suit]}')
             return
-        
+
         for suit in range(len(self.suits)):
             if suit == self.trump_suit:
                 continue
@@ -391,7 +387,7 @@ if __name__ == '__main__':
         print(f'Player {player + 1}')
         winning_player = tute.play_turn(player=player)
         print()
-        
+
         if winning_player is not None:
             print(f'Player {winning_player + 1} won trick')
             print(f'Points: {tute.calc_points(winning_player)}')
