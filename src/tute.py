@@ -202,19 +202,19 @@ class Tute:
         highest_ranking = None
         highest_ranking_trump = None
         for player in range(self.num_players):
-            card = self.get_cards_in(f'player {player + 1} face up')
+            card = self.get_cards_in(f'player {player + 1} face up').iloc[0]
 
-            if card.suit.iloc[0] == self.suit and (
+            if card.suit == self.suit and (
                     highest_ranking is None
-                    or card.ranking.iloc[0] < highest_ranking):
-                highest_ranking = card.ranking.iloc[0]
+                    or card.ranking < highest_ranking):
+                highest_ranking = card.ranking
                 winning_player = player
                 continue
 
-            if card.suit.iloc[0] == self.trump_suit and (
+            if card.suit == self.trump_suit and (
                     highest_ranking_trump is None
-                    or card.ranking.iloc[0] < highest_ranking_trump):
-                highest_ranking_trump = card.ranking.iloc[0]
+                    or card.ranking < highest_ranking_trump):
+                highest_ranking_trump = card.ranking
                 winning_player = player
 
         face_up = self.get_face_up()
