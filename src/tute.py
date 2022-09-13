@@ -283,10 +283,10 @@ class Tute:
                 if trump_swap.location == self.locations[
                         f'player {player + 1} hand']:
                     self.deck.loc[self.deck.index == trump_swap.name,
-                                   'location'] = self.locations['trump']
+                                  'location'] = self.locations['trump']
                     self.deck.loc[self.deck.index == trump.name,
-                                   'location'] = self.locations[
-                                       f'player {player + 1} hand']
+                                  'location'] = self.locations[
+                                      f'player {player + 1} hand']
                     self.shown.add(trump.name)
                     logging.info(
                         f'Player {player + 1} swapped {trump.description} for {trump_swap.description}'
@@ -308,9 +308,27 @@ class Tute:
                                    & (self.deck.value == 2)].iloc[0]
             _swap_trump(trump, trump_swap)
 
-    def do_cantes(self):
-        # to simplify we are going to "cantar" greedily
-        pass
+    def cantar(self, player):
+        # To simplify we are going to "cantar" greedily.
+        # Also, we are not going to allow "cantar tute".
+
+        def _have_caballo_and_rey(hand, suit):
+            return len(hand[(hand.suit == suit)
+                            & ((hand.value == 11) | (hand.value == 12))]) == 2
+
+        hand = self.get_hand(player)
+        if len(self.cantes) == 0 and _have_caballo_and_rey(hand, self.trump_suit):
+            self.cantes[self.trump_suit] = player
+            logging.info(f'Player {player + 1} canta {self.suits[self.trump_suit]}')
+            return
+        
+        for suit in range(len(self.suits)):
+            if suit == self.trump_suit:
+                continue
+            if suit not in self.cantes and _have_caballo_and_rey(hand, suit):
+                self.cantes[suit] = player
+                logging.info(f'Player {player + 1} canta {self.suits[suit]}')
+                return
 
     def play_turn(self, player, choose_card=None):
         choose_card = choose_card or self.choose_card
@@ -334,10 +352,9 @@ class Tute:
         face_up = self.get_face_up()
         if len(face_up) == self.num_players:
             winning_player = self.do_trick()
+            if self.num_players != 2 or len(self.get_cards_in('pile')) > 0:
+                self.cantar(winning_player)  # before dealing new cards
             self.deal_new_cards(winning_player)
-
-            self.do_cantes()
-
             if len(self.get_hand(winning_player)) == 0:
                 self.last_trick_winner = winning_player
 

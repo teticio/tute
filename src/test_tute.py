@@ -37,8 +37,8 @@ def test_turn():
 
 def test_game():
 
-    def _test_game(num_players):
-        tute = Tute(num_players=num_players)
+    def _test_game(num_players, habanero):
+        tute = Tute(num_players=num_players, habanero=habanero)
         tute.deal()
 
         player = 0
@@ -49,6 +49,8 @@ def test_game():
                 player = winning_player
             else:
                 player = (player + 1) % tute.num_players
+        for player in range(tute.num_players):
+            tute.calc_points(player)
 
         num_cards_in_tricks = 0
         for player in range(tute.num_players):
@@ -57,5 +59,6 @@ def test_game():
         assert num_cards_in_tricks == len(tute.deck)
 
     for _ in range(10):
+        _test_game(num_players=2, habanero=True)
         for num_players in range(2, 5):
-            _test_game(num_players)
+            _test_game(num_players=num_players, habanero=False)
