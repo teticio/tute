@@ -1,13 +1,22 @@
+"""Test Tute game.
+"""
 import random
 from tute import Tute
 
 
 def test_deck():
+    """Test deck has the right number of cards.
+    """
     tute = Tute()
     assert tute.deck.description.unique().size == 40
 
+    tute = Tute(num_players=3)
+    assert tute.deck.description.unique().size == 36
+
 
 def test_deal():
+    """Test right number of cards are dealt.
+    """
     tute = Tute()
     tute.deal()
 
@@ -16,12 +25,16 @@ def test_deal():
     assert tute.trump_suit is not None
 
 
-def choose_card(context, hand, possible_cards):
+def choose_card(context, hand, possible_cards):  # pylint: disable=unused-argument
+    """Dummy player that always chooses a random card.
+    """
     assert len(possible_cards) > 0
     return hand.iloc[random.choice(possible_cards)]
 
 
-def test_turn():
+def test_round():
+    """Test that a trick is won after a round.
+    """
     tute = Tute()
     tute.deal()
 
@@ -36,6 +49,8 @@ def test_turn():
 
 
 def test_game():
+    """Test that all the cards end up in tricks at the end of a game.
+    """
 
     def _test_game(num_players, habanero):
         tute = Tute(num_players=num_players, habanero=habanero)

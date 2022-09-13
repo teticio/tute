@@ -1,4 +1,6 @@
-# https://www.ludoteka.com/clasika/tute-habanero.html
+"""Tute card game.
+"""
+# pragma pylint: disable=redefined-outer-name
 
 import os
 import logging
@@ -9,6 +11,8 @@ logging.basicConfig(format='%(message)s', level=logging.INFO)
 
 
 class Tute:
+    """Tute card game.
+    """
     cards = {
         1: {
             'name': 'el as',
@@ -79,6 +83,12 @@ class Tute:
         self.num_cards_per_player = [8, 12, 10][self.num_players - 2]
         self.habanero = habanero
 
+        self.suit = None
+        self.trump_suit = None
+        self.shown = set()
+        self.cantes = {}
+        self.last_trick_winner = None
+
         self.locations = {
             'unknown': 0,
             'pile': 1,
@@ -104,16 +114,16 @@ class Tute:
         deck = {}
         card_id = 0
         for suit in self.suits:
-            for card in self.cards:
-                if card in discards:
+            for card in self.cards.items():
+                if card[0] in discards:
                     continue
 
                 deck[card_id] = {
-                    'description': f"{self.cards[card]['name']} de {suit}",
+                    'description': f"{card[1]['name']} de {suit}",
                     'suit': self.suits.index(suit),
-                    'value': card,
-                    'ranking': self.cards[card]['ranking'],
-                    'points': self.cards[card]['points'],
+                    'value': card[0],
+                    'ranking': card[1]['ranking'],
+                    'points': card[1]['points'],
                     'location': self.locations['pile']
                 }
                 card_id += 1
@@ -121,12 +131,25 @@ class Tute:
         self.deck = pd.DataFrame.from_dict(deck, orient='index')
 
     def shuffle(self):
+        """Shuffle deck.
+        """
         self.deck = self.deck.sample(frac=1)
 
     def move(self, card, location):
+        """Move card to location.
+
+        Args:
+            card (Series): card to move
+            location (int): location according to tute.location
+        """
         self.deck.loc[card.name, 'location'] = self.locations[location]
 
     def deal(self, dealer=0):
+        """Deal deck.
+
+        Args:
+            dealer (int): number of player who is dealing
+        """
         self.shuffle()
 
         self.suit = None
@@ -134,37 +157,59 @@ class Tute:
         self.cantes = {}
         self.last_trick_winner = None
 
-        player = (dealer + 1) % self.num_players
-        self.current_player = player
-
         dealt = 0
+        player = (dealer + 1) % self.num_players
         deck = self.deck.T.iteritems()
         for card in deck:
             self.move(card[1], f'player {player + 1} hand')
             player = (player + 1) % self.num_players
             dealt += 1
-            if self.num_cards_per_player is not None and dealt == self.num_cards_per_player * self.num_players:
+            if (self.num_cards_per_player is not None
+                    and dealt == self.num_cards_per_player * self.num_players):
                 break
 
         try:
-            trump = deck.__next__()
+            trump = next(deck)
             self.move(trump[1], 'trump')
             self.trump_suit = trump[1].suit
 
         except StopIteration:
-            self.shown.add(card[0])
-            self.trump_suit = card[1].suit
+            self.shown.add(card[0])  # pylint: disable=undefined-loop-variable
+            self.trump_suit = card[1].suit  # pylint: disable=undefined-loop-variable
 
     def get_cards_in(self, location):
+        """Get cards in location.
+
+        Args:
+            location (int): location according to tute.location
+        """
         return self.deck[self.deck.location == self.locations[location]]
 
     def get_hand(self, player):
+        """Get cards in player's hand.
+
+        Args:
+            player (int): number of player
+
+        Returns:
+            Sedries: cards in player's hand
+        """
         return self.get_cards_in(f'player {player + 1} hand')
 
     def get_trump(self):
+        """Get trump card (if not in a hand).
+
+        Returns:
+            Series: trump card.
+        """
         return self.get_cards_in('trump')
 
     def get_face_up(self):
+        """Get cards in play.
+
+        Returns:
+            Series: cards in play.
+        """
         return self.deck[self.deck.location.isin([
             self.locations[f'player {player + 1} face up']
             for player in range(self.num_players)
@@ -172,13 +217,25 @@ class Tute:
 
     @staticmethod
     def show_cards(cards, with_index=False):
+        """Convenience method to print cards.
+
+        Args:
+            cards (Series): cards to print
+            with_index (bool): if True, print index of each card
+        """
         for index, card in enumerate(cards.T.iteritems()):
             if with_index:
                 print(f'{index}: ', end='')
             print(card[1].description)
 
     @staticmethod
-    def choose_card(context, hand, possible_cards):
+    def choose_card(context, hand, possible_cards):  # pylint: disable=unused-argument
+        """Convenience method to get input from user.
+
+        Args:
+            hand (Series): cards in hand
+            possible_cards (List): list of possible card indices
+        """
         Tute.show_cards(hand, with_index=True)
 
         while True:
@@ -192,6 +249,8 @@ class Tute:
         return hand.iloc[int(choice) - 1]
 
     def do_trick(self):
+        """Process trick.
+        """
         highest_ranking = None
         highest_ranking_trump = None
         for player in range(self.num_players):
@@ -216,18 +275,28 @@ class Tute:
         return winning_player
 
     def calc_points(self, player):
+        """Tot up points for player.
+
+        Args:
+            player (int): number of player for which to calculate points
+        """
         points = 0
         if player == self.last_trick_winner:
             points += 10
 
-        for cante in self.cantes:
-            if self.cantes[cante] == player:
-                points += 40 if cante == self.trump_suit else 20
+        for cante in self.cantes.items():
+            if cante[1] == player:
+                points += 40 if cante[1] == self.trump_suit else 20
 
         return points + self.get_cards_in(
             f'player {player + 1} tricks').points.sum()
 
     def deal_new_cards(self, winning_player):
+        """Deal cards from pile, starting with player who won the trick.
+
+        Args:
+            winning_player (int): number of player who won the last trick.
+        """
         to_deal = pd.concat(
             [self.get_cards_in('pile'),
              self.get_cards_in('trump')], axis=0)
@@ -242,10 +311,24 @@ class Tute:
                 )
 
     def get_follow_suit(self):
+        """Determines whether player has to follow suit or not.
+
+        Returns:
+            bool: if True, suit must be followed
+        """
         return not self.habanero or len(self.get_cards_in('pile')) + len(
             self.get_cards_in('trump')) < self.num_players
 
     def get_possible_cards(self, face_up, hand):
+        """Determine which cards can be played from the hand.
+
+        Args:
+            face_up (Series): cards in play
+            hand (Series): cards in hand
+
+        Returns:
+            List: list of possible card indices
+        """
         follow_suit = self.get_follow_suit()
         if not follow_suit or len(face_up) == 0:
             return hand.T.any()
@@ -274,6 +357,8 @@ class Tute:
         return hand.T.any()
 
     def swap_trump(self):
+        """Automatically swap trump card if possible
+        """
 
         def _swap_trump(trump, trump_swap):
             for player in range(self.num_players):
@@ -285,9 +370,8 @@ class Tute:
                                   'location'] = self.locations[
                                       f'player {player + 1} hand']
                     self.shown.add(trump.name)
-                    logging.info(
-                        f'Player {player + 1} swapped {trump.description} for {trump_swap.description}'
-                    )
+                    logging.info('Player %s swapped %s for %s', player + 1,
+                                 trump.description, trump_swap.description)
 
         trump = self.get_cards_in('trump')
         if len(trump) < 1:
@@ -306,6 +390,12 @@ class Tute:
             _swap_trump(trump, trump_swap)
 
     def cantar(self, player):
+        """Automatically "cantar".
+
+        Args:
+            player (int): number of player who is "cantando"
+        """
+
         # To simplify we are going to "cantar" greedily.
         # Also, we are not going to allow "cantar tute".
 
@@ -317,19 +407,26 @@ class Tute:
         if len(self.cantes) == 0 and _have_caballo_and_rey(
                 hand, self.trump_suit):
             self.cantes[self.trump_suit] = player
-            logging.info(
-                f'Player {player + 1} canta {self.suits[self.trump_suit]}')
+            logging.info('Player %s canta %s', player + 1,
+                         self.suits[self.trump_suit])
             return
 
-        for suit in range(len(self.suits)):
+        for suit in enumerate(self.suits):
             if suit == self.trump_suit:
                 continue
             if suit not in self.cantes and _have_caballo_and_rey(hand, suit):
                 self.cantes[suit] = player
-                logging.info(f'Player {player + 1} canta {self.suits[suit]}')
+                logging.info('Player %s canta %s', player + 1,
+                             self.suits[suit])
                 return
 
     def play_turn(self, player, choose_card=None):
+        """Play turn.
+
+        Args:
+            player (int): number of player whose turn it is
+            choose_card (func): function to choose card (see Tute.choose_card)
+        """
         choose_card = choose_card or self.choose_card
 
         if self.habanero:
@@ -364,7 +461,7 @@ if __name__ == '__main__':
     tute = Tute()
     tute.deal()
 
-    player = 0
+    player = 0  # pylint: disable=invalid-name
     while len(tute.get_hand(player)) > 0:
         print('Trump')
         trump = tute.get_trump()
@@ -399,7 +496,7 @@ if __name__ == '__main__':
         input('Press any key to change player ')
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    highest_points = None
+    highest_points = None  # pylint: disable=invalid-name
     for player in range(tute.num_players):
         points = tute.calc_points(player)
         print(f'Player {player + 1} points: {points}')
