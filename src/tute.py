@@ -81,26 +81,33 @@ class Tute:
 
     suits = ['oros', 'copas', 'espadas', 'bastos']
 
-    def __init__(self, discard_eights_and_nines=True, num_players=2):
+    def __init__(self,
+                 num_players=2,
+                 num_cards_per_player=8,
+                 habanero=True,
+                 discard_eights_and_nines=True):
+        self.num_players = max(2, min(num_players, 4))
+        self.num_cards_per_player = num_cards_per_player
+        self.habanero = habanero
+        self.discard_eights_and_nines = discard_eights_and_nines
+
         self.trump_suit = None
         self.suit = None
-        self.num_players = num_players
 
         self.locations = {
             'unknown': 0,
-            'discarded': 1,
-            'pile': 2,
-            'trump': 3,
+            'pile': 1,
+            'trump': 2,
             **{
-                f'player {player + 1} hand': 3 * player + 4
+                f'player {player + 1} hand': 3 * player + 3
                 for player in range(num_players)
             },
             **{
-                f'player {player + 1} tricks': 3 * player + 5
+                f'player {player + 1} tricks': 3 * player + 4
                 for player in range(num_players)
             },
             **{
-                f'player {player + 1} face up': 3 * player + 6
+                f'player {player + 1} face up': 3 * player + 5
                 for player in range(num_players)
             }
         }
@@ -109,20 +116,16 @@ class Tute:
         card_id = 0
         for suit in self.suits:
             for card in self.cards:
+                if self.discard_eights_and_nines and card in [8, 9]:
+                    continue
+
                 deck[card_id] = {
-                    'description':
-                    f"{self.cards[card]['name']} de {suit}",
-                    'suit':
-                    self.suits.index(suit),
-                    'value':
-                    card,
-                    'ranking':
-                    self.cards[card]['ranking'],
-                    'points':
-                    self.cards[card]['points'],
-                    'location':
-                    self.locations['discarded'] if discard_eights_and_nines
-                    and card in [8, 9] else self.locations['pile']
+                    'description': f"{self.cards[card]['name']} de {suit}",
+                    'suit': self.suits.index(suit),
+                    'value': card,
+                    'ranking': self.cards[card]['ranking'],
+                    'points': self.cards[card]['points'],
+                    'location': self.locations['pile']
                 }
                 card_id += 1
 
@@ -134,23 +137,32 @@ class Tute:
     def move(self, card, location):
         self.deck.loc[card.name, 'location'] = self.locations[location]
 
-    def deal(self, dealer=0, num_cards=8):
+    def deal(self, dealer=0):
         self.shuffle()
 
         player = (dealer + 1) % self.num_players
         self.current_player = player
 
-        pile = self.get_cards_in('pile')
         dealt = 0
-        for card in pile.T.iteritems():
+        deck = self.deck.T.iteritems()
+        for card in deck:
             self.move(card[1], f'player {player + 1} hand')
             player = (player + 1) % self.num_players
-            if dealt == num_cards * self.num_players:
-                break
             dealt += 1
+            if self.num_cards_per_player is not None and dealt == self.num_cards_per_player * self.num_players:
+                break
 
-        self.move(card[1], 'trump')
-        self.trump_suit = card[1]['suit']
+        try:
+            trump = deck.__next__()
+            self.move(trump[1], 'trump')
+            self.trump_suit = trump[1]['suit']
+            
+        except StopIteration:
+            # TODO: "show" trump
+            self.trump_suit = card[1]['suit']
+
+        remainder = len(self.deck) % self.num_players
+        self.deck.drop(self.deck.tail(remainder).index, inplace = True)
 
         self.cantes = {k: 0 for k in self.suits}
 
@@ -170,7 +182,7 @@ class Tute:
         ])]
 
     @staticmethod
-    def choose_card(hand, possible_cards):
+    def choose_card(context, hand, possible_cards):
         pprint([
             f'{_ + 1}: {card}'
             for _, card in enumerate(hand.description.tolist())
@@ -229,13 +241,9 @@ class Tute:
                     f'player {(winning_player + dealt) % self.num_players + 1} hand'
                 )
 
-            else:
-                # discard the rest
-                for card in to_deal.T.iteritems():
-                    self.move(card[1], 'discarded')
-
     def get_possible_cards(self, face_up, hand):
-        follow_suit = len(self.get_cards_in('pile')) + 1 < self.num_players
+        follow_suit = not self.habanero or len(
+            self.get_cards_in('pile')) + 1 < self.num_players
         if not follow_suit or len(face_up) == 0:
             return hand.T.any()
 
@@ -273,7 +281,7 @@ class Tute:
                 self.get_possible_cards(face_up, hand)) if possible
         ]
 
-        card = choose_card(hand, possible_cards)
+        card = choose_card(self, hand, possible_cards)
         self.move(card, f'player {player + 1} face up')
         if len(face_up) == 0:
             self.suit = card.suit
@@ -300,7 +308,8 @@ if __name__ == '__main__':
             print('FACE UP')
             print(face_up)
 
-        if len(tute.get_cards_in('pile')) + 1 < tute.num_players:
+        if not tute.habanero or len(
+                tute.get_cards_in('pile')) + 1 < tute.num_players:
             print('FOLLOW')
 
         print(f'PLAYER {player + 1}')
@@ -316,7 +325,7 @@ if __name__ == '__main__':
         os.system('cls' if os.name == 'nt' else 'clear')
 
     highest_points = None
-    for player in range(tute.num_players):  ### TODO: what about ties?
+    for player in range(tute.num_players):
         points = tute.calc_points(player)
         print(f'PLAYER {player + 1} POINTS: {points}')
         if highest_points is None or points > highest_points:
