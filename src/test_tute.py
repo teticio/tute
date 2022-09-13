@@ -50,7 +50,11 @@ def test_game():
             else:
                 player = (player + 1) % tute.num_players
 
-        assert len(tute.get_cards_in('pile')) == 0
+        num_cards_in_tricks = 0
+        for player in range(tute.num_players):
+            num_cards_in_tricks += len(
+                tute.get_cards_in(f'player {player + 1} tricks'))
+        assert num_cards_in_tricks == len(tute.deck)
 
     _test_game(num_cards_per_player=8)
     _test_game(num_cards_per_player=None)
