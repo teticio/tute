@@ -155,11 +155,11 @@ class Tute:
         try:
             trump = deck.__next__()
             self.move(trump[1], 'trump')
-            self.trump_suit = trump[1]['suit']
+            self.trump_suit = trump[1].suit
             
         except StopIteration:
             # TODO: "show" trump
-            self.trump_suit = card[1]['suit']
+            self.trump_suit = card[1].suit
 
         remainder = len(self.deck) % self.num_players
         self.deck.drop(self.deck.tail(remainder).index, inplace = True)
