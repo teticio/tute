@@ -37,8 +37,8 @@ def test_turn():
 
 def test_game():
 
-    def _test_game(num_cards_per_player):
-        tute = Tute(num_cards_per_player=num_cards_per_player)
+    def _test_game(num_players):
+        tute = Tute(num_players=num_players)
         tute.deal()
 
         player = 0
@@ -56,5 +56,6 @@ def test_game():
                 tute.get_cards_in(f'player {player + 1} tricks'))
         assert num_cards_in_tricks == len(tute.deck)
 
-    _test_game(num_cards_per_player=8)
-    _test_game(num_cards_per_player=None)
+    for _ in range(10):
+        for num_players in range(2, 5):
+            _test_game(num_players)

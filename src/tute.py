@@ -81,18 +81,10 @@ class Tute:
 
     suits = ['oros', 'copas', 'espadas', 'bastos']
 
-    def __init__(self,
-                 num_players=2,
-                 num_cards_per_player=8,
-                 habanero=True,
-                 discard_eights_and_nines=True):
+    def __init__(self, num_players=2, habanero=True):
         self.num_players = max(2, min(num_players, 4))
-        self.num_cards_per_player = num_cards_per_player
+        self.num_cards_per_player = [8, 12, 10][self.num_players - 2]
         self.habanero = habanero
-        self.discard_eights_and_nines = discard_eights_and_nines
-
-        self.trump_suit = None
-        self.suit = None
 
         self.locations = {
             'unknown': 0,
@@ -112,11 +104,15 @@ class Tute:
             }
         }
 
+        discards = [8, 9]
+        if self.num_players == 3:
+            discards += [2]
+
         deck = {}
         card_id = 0
         for suit in self.suits:
             for card in self.cards:
-                if self.discard_eights_and_nines and card in [8, 9]:
+                if card in discards:
                     continue
 
                 deck[card_id] = {
@@ -140,6 +136,11 @@ class Tute:
     def deal(self, dealer=0):
         self.shuffle()
 
+        self.suit = None
+        self.shown = set()
+        self.cantes = {}
+        self.last_trick_winner = None
+
         player = (dealer + 1) % self.num_players
         self.current_player = player
 
@@ -156,15 +157,10 @@ class Tute:
             trump = deck.__next__()
             self.move(trump[1], 'trump')
             self.trump_suit = trump[1].suit
-            
+
         except StopIteration:
-            # TODO: "show" trump
+            self.shown.add(card[0])
             self.trump_suit = card[1].suit
-
-        remainder = len(self.deck) % self.num_players
-        self.deck.drop(self.deck.tail(remainder).index, inplace = True)
-
-        self.cantes = {k: 0 for k in self.suits}
 
     def get_cards_in(self, location):
         return self.deck[self.deck.location == self.locations[location]]
@@ -204,9 +200,8 @@ class Tute:
         for player in range(self.num_players):
             card = self.get_cards_in(f'player {player + 1} face up').iloc[0]
 
-            if card.suit == self.suit and (
-                    highest_ranking is None
-                    or card.ranking < highest_ranking):
+            if card.suit == self.suit and (highest_ranking is None
+                                           or card.ranking < highest_ranking):
                 highest_ranking = card.ranking
                 winning_player = player
                 continue
@@ -224,8 +219,16 @@ class Tute:
         return winning_player
 
     def calc_points(self, player):
-        # TODO: cantes etc
-        return self.get_cards_in(f'player {player + 1} tricks').points.sum()
+        points = 0
+        if player == self.last_trick_winner:
+            points += 10
+
+        for cante in self.cantes:
+            if self.cantes[cante] == player:
+                points += 40 if cante == self.trump_suit else 20
+
+        return points + self.get_cards_in(
+            f'player {player + 1} tricks').points.sum()
 
     def deal_new_cards(self, winning_player):
         to_deal = pd.concat(
@@ -241,9 +244,12 @@ class Tute:
                     f'player {(winning_player + dealt) % self.num_players + 1} hand'
                 )
 
+    def get_follow_suit(self):
+        return not self.habanero or len(self.get_cards_in('pile')) + len(
+            self.get_cards_in('trump')) < self.num_players
+
     def get_possible_cards(self, face_up, hand):
-        follow_suit = not self.habanero or len(
-            self.get_cards_in('pile')) + 1 < self.num_players
+        follow_suit = self.get_follow_suit()
         if not follow_suit or len(face_up) == 0:
             return hand.T.any()
 
@@ -270,9 +276,47 @@ class Tute:
 
         return hand.T.any()
 
+    def swap_trump(self):
+
+        def _swap_trump(trump, trump_swap):
+            for player in range(self.num_players):
+                if trump_swap.location == self.locations[
+                        f'player {player + 1} hand']:
+                    self.deck.loc[self.deck.index == trump_swap.name,
+                                   'location'] = self.locations['trump']
+                    self.deck.loc[self.deck.index == trump.name,
+                                   'location'] = self.locations[
+                                       f'player {player + 1} hand']
+                    self.shown.add(trump.name)
+                    logging.info(
+                        f'Player {player + 1} swapped {trump.description} for {trump_swap.description}'
+                    )
+
+        trump = self.get_cards_in('trump')
+        if len(trump) < 1:
+            return
+
+        trump = trump.iloc[0]
+        if trump.value >= 10:
+            trump_swap = self.deck[(self.deck.suit == self.trump_suit)
+                                   & (self.deck.value == 7)].iloc[0]
+            _swap_trump(trump, trump_swap)
+
+        trump = self.get_cards_in('trump').iloc[0]
+        if trump.value < 10:
+            trump_swap = self.deck[(self.deck.suit == self.trump_suit)
+                                   & (self.deck.value == 2)].iloc[0]
+            _swap_trump(trump, trump_swap)
+
+    def do_cantes(self):
+        # to simplify we are going to "cantar" greedily
+        pass
+
     def play_turn(self, player, choose_card=None):
         choose_card = choose_card or self.choose_card
-        # TODO: automatically cantar, swap trump
+
+        if self.habanero:
+            self.swap_trump()
 
         hand = self.get_hand(player)
         face_up = self.get_face_up()
@@ -291,6 +335,12 @@ class Tute:
         if len(face_up) == self.num_players:
             winning_player = self.do_trick()
             self.deal_new_cards(winning_player)
+
+            self.do_cantes()
+
+            if len(self.get_hand(winning_player)) == 0:
+                self.last_trick_winner = winning_player
+
         return winning_player
 
 
@@ -300,35 +350,34 @@ if __name__ == '__main__':
 
     player = 0
     while len(tute.get_hand(player)) > 0:
-        print('TRUMP')
+        print('Trump')
         print(tute.get_trump())
 
         face_up = tute.get_face_up()
         if len(face_up) > 0:
-            print('FACE UP')
+            print('Face up')
             print(face_up)
 
-        if not tute.habanero or len(
-                tute.get_cards_in('pile')) + 1 < tute.num_players:
-            print('FOLLOW')
+        if tute.get_follow_suit():
+            print('Follow')
 
-        print(f'PLAYER {player + 1}')
+        print(f'Player {player + 1}')
         winning_player = tute.play_turn(player=player)
         if winning_player is not None:
-            print(f'PLAYER {winning_player + 1} WON TRICK')
-            print(f'POINTS: {tute.calc_points(winning_player)}')
+            print(f'Player {winning_player + 1} won trick')
+            print(f'Points: {tute.calc_points(winning_player)}')
             player = winning_player
         else:
             player = (player + 1) % tute.num_players
 
-        input('NEXT PLAYER')
+        input('Press any key to change player')
         os.system('cls' if os.name == 'nt' else 'clear')
 
     highest_points = None
     for player in range(tute.num_players):
         points = tute.calc_points(player)
-        print(f'PLAYER {player + 1} POINTS: {points}')
+        print(f'Player {player + 1} points: {points}')
         if highest_points is None or points > highest_points:
             highest_points = points
             winning_player = player
-    print(f'PLAYER {winning_player + 1} WINS!')
+    print(f'Player {winning_player + 1} wins!')
