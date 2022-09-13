@@ -225,7 +225,7 @@ class Tute:
         """
         for index, card in enumerate(cards.T.iteritems()):
             if with_index:
-                print(f'{index}: ', end='')
+                print(f'{index + 1}: ', end='')
             print(card[1].description)
 
     @staticmethod
@@ -411,7 +411,7 @@ class Tute:
                          self.suits[self.trump_suit])
             return
 
-        for suit in enumerate(self.suits):
+        for suit, _ in enumerate(self.suits):
             if suit == self.trump_suit:
                 continue
             if suit not in self.cantes and _have_caballo_and_rey(hand, suit):
