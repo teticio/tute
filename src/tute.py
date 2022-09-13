@@ -8,7 +8,6 @@
 
 import os
 import logging
-from pprint import pprint
 
 import pandas as pd
 
@@ -178,11 +177,15 @@ class Tute:
         ])]
 
     @staticmethod
+    def show_cards(cards, with_index=False):
+        for index, card in enumerate(cards.T.iteritems()):
+            if with_index:
+                print(f'{index}: ', end='')
+            print(card[1].description)
+
+    @staticmethod
     def choose_card(context, hand, possible_cards):
-        pprint([
-            f'{_ + 1}: {card}'
-            for _, card in enumerate(hand.description.tolist())
-        ])
+        Tute.show_cards(hand, with_index=True)
 
         while True:
             choice = input(' '.join([f'{_ + 1} '
@@ -368,26 +371,36 @@ if __name__ == '__main__':
     player = 0
     while len(tute.get_hand(player)) > 0:
         print('Trump')
-        print(tute.get_trump())
+        trump = tute.get_trump()
+        if len(trump) > 0:
+            tute.show_cards(trump)
+        else:
+            print(tute.suits[tute.trump_suit])
+        print()
 
         face_up = tute.get_face_up()
         if len(face_up) > 0:
             print('Face up')
-            print(face_up)
+            tute.show_cards(face_up)
+            print()
 
         if tute.get_follow_suit():
-            print('Follow')
+            print('Follow suit')
+            print()
 
         print(f'Player {player + 1}')
         winning_player = tute.play_turn(player=player)
+        print()
+        
         if winning_player is not None:
             print(f'Player {winning_player + 1} won trick')
             print(f'Points: {tute.calc_points(winning_player)}')
+            print()
             player = winning_player
         else:
             player = (player + 1) % tute.num_players
 
-        input('Press any key to change player')
+        input('Press any key to change player ')
         os.system('cls' if os.name == 'nt' else 'clear')
 
     highest_points = None
