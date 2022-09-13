@@ -4,6 +4,8 @@
 
 import os
 import logging
+import argparse
+from xmlrpc.client import boolean
 
 import pandas as pd
 
@@ -458,7 +460,18 @@ class Tute:
 
 
 if __name__ == '__main__':
-    tute = Tute()
+    parser = argparse.ArgumentParser(description="Demo Tute game.")
+    parser.add_argument("--num_players",
+                        type=int,
+                        default=2,
+                        help='number of players')
+    parser.add_argument("--habanero",
+                        type=bool,
+                        default=True,
+                        help='Tute Habanero')
+    args = parser.parse_args()
+
+    tute = Tute(num_players=args.num_players, habanero=args.habanero)
     tute.deal()
 
     player = 0  # pylint: disable=invalid-name
