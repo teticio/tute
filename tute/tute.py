@@ -5,6 +5,7 @@
 import os
 import logging
 import argparse
+from typing import Callable
 
 import pandas as pd
 
@@ -79,7 +80,7 @@ class Tute:
 
     suits = ['oros', 'copas', 'espadas', 'bastos']
 
-    def __init__(self, num_players=2, habanero=True):
+    def __init__(self, num_players: int = 2, habanero: bool = True):
         self.num_players = max(2, min(num_players, 4))
         self.num_cards_per_player = [8, 12, 10][self.num_players - 2]
         self.habanero = habanero
@@ -136,20 +137,20 @@ class Tute:
         """
         self.deck = self.deck.sample(frac=1)
 
-    def move(self, card, location):
+    def move(self, card: pd.DataFrame, location: int):
         """Move card to location.
 
         Args:
-            card (Series): card to move
-            location (int): location according to tute.location
+            card (DataFrame): Card to move.
+            location (int): Location according to tute.location.
         """
         self.deck.loc[card.name, 'location'] = self.locations[location]
 
-    def deal(self, dealer=0):
+    def deal(self, dealer: int = 0):
         """Deal deck.
 
         Args:
-            dealer (int): number of player who is dealing
+            dealer (int): Number of player who is dealing.
         """
         self.shuffle()
 
@@ -178,38 +179,41 @@ class Tute:
             self.shown.add(card[0])  # pylint: disable=undefined-loop-variable
             self.trump_suit = card[1].suit  # pylint: disable=undefined-loop-variable
 
-    def get_cards_in(self, location):
+    def get_cards_in(self, location: int) -> pd.DataFrame:
         """Get cards in location.
 
         Args:
-            location (int): location according to tute.location
+            location (int): Location according to tute.location.
+
+        Returns:
+            DataFrame: cards in location.
         """
         return self.deck[self.deck.location == self.locations[location]]
 
-    def get_hand(self, player):
+    def get_hand(self, player: int) -> pd.DataFrame:
         """Get cards in player's hand.
 
         Args:
-            player (int): number of player
+            player (int): Number of player.
 
         Returns:
-            Sedries: cards in player's hand
+            DataFrame: Cards in player's hand.
         """
         return self.get_cards_in(f'player {player + 1} hand')
 
-    def get_trump(self):
+    def get_trump(self) -> pd.DataFrame:
         """Get trump card (if not in a hand).
 
         Returns:
-            Series: trump card.
+            DataFrame: Trump card.
         """
         return self.get_cards_in('trump')
 
-    def get_face_up(self):
+    def get_face_up(self) -> pd.DataFrame:
         """Get cards in play.
 
         Returns:
-            Series: cards in play.
+            DataFrame: Cards in play.
         """
         return self.deck[self.deck.location.isin([
             self.locations[f'player {player + 1} face up']
@@ -217,12 +221,12 @@ class Tute:
         ])]
 
     @staticmethod
-    def show_cards(cards, with_index=False):
+    def show_cards(cards, with_index: bool = False):
         """Convenience method to print cards.
 
         Args:
-            cards (Series): cards to print
-            with_index (bool): if True, print index of each card
+            cards (Series): Cards to print.
+            with_index (bool): If True, print index of each card.
         """
         for index, card in enumerate(cards.T.iteritems()):
             if with_index:
@@ -230,12 +234,13 @@ class Tute:
             print(card[1].description)
 
     @staticmethod
-    def choose_card(context, hand, possible_cards):  # pylint: disable=unused-argument
+    def choose_card(
+        context, hand: pd.DataFrame, possible_cards: pd.DataFrame) -> list:  # pylint: disable=unused-argument
         """Convenience method to get input from user.
 
         Args:
-            hand (Series): cards in hand
-            possible_cards (list): list of possible card indices
+            hand (Series): Cards in hand.
+            possible_cards (list): List of possible card indices.
         """
         Tute.show_cards(hand, with_index=True)
 
@@ -275,11 +280,11 @@ class Tute:
 
         return winning_player
 
-    def calc_points(self, player):
+    def calc_points(self, player: int) -> int:
         """Tot up points for player.
 
         Args:
-            player (int): number of player for which to calculate points
+            player (int): Number of player for which to calculate points.
         """
         points = 0
         if player == self.last_trick_winner:
@@ -292,11 +297,11 @@ class Tute:
         return points + self.get_cards_in(
             f'player {player + 1} tricks').points.sum()
 
-    def deal_new_cards(self, winning_player):
+    def deal_new_cards(self, winning_player: int):
         """Deal cards from pile, starting with player who won the trick.
 
         Args:
-            winning_player (int): number of player who won the last trick.
+            Winning_player (int): number of player who won the last trick.
         """
         to_deal = pd.concat(
             [self.get_cards_in('pile'),
@@ -311,24 +316,25 @@ class Tute:
                     f'player {(winning_player + dealt) % self.num_players + 1} hand'
                 )
 
-    def get_follow_suit(self):
+    def get_follow_suit(self) -> bool:
         """Determines whether player has to follow suit or not.
 
         Returns:
-            bool: if True, suit must be followed
+            bool: If True, suit must be followed.
         """
         return not self.habanero or len(self.get_cards_in('pile')) + len(
             self.get_cards_in('trump')) < self.num_players
 
-    def get_possible_cards(self, face_up, hand):
+    def get_possible_cards(self, face_up: pd.DataFrame,
+                           hand: pd.DataFrame) -> list:
         """Determine which cards can be played from the hand.
 
         Args:
-            face_up (Series): cards in play
-            hand (Series): cards in hand
+            face_up (Series): Cards in play.
+            hand (Series): Cards in hand.
 
         Returns:
-            list: list of possible card indices
+            list: List of possible card indices.
         """
         follow_suit = self.get_follow_suit()
         if not follow_suit or len(face_up) == 0:
@@ -358,7 +364,7 @@ class Tute:
         return hand.T.any()
 
     def swap_trump(self):
-        """Automatically swap trump card if possible
+        """Automatically swap trump card if possible.
         """
 
         def _swap_trump(trump, trump_swap):
@@ -390,11 +396,11 @@ class Tute:
                                    & (self.deck.value == 2)].iloc[0]
             _swap_trump(trump, trump_swap)
 
-    def cantar(self, player):
+    def cantar(self, player: int):
         """Automatically "cantar".
 
         Args:
-            player (int): number of player who is "cantando"
+            player (int): Number of player who is "cantando".
         """
 
         # To simplify we are going to "cantar" greedily.
@@ -424,12 +430,12 @@ class Tute:
                              self.suits[suit])
                 return
 
-    def play_turn(self, player, choose_card=None):
+    def play_turn(self, player: int, choose_card: Callable = None) -> int:
         """Play turn.
 
         Args:
-            player (int): number of player whose turn it is
-            choose_card (func): function to choose card (see Tute.choose_card)
+            player (int): Mumber of player whose turn it is.
+            choose_card (function): Function to choose card (see Tute.choose_card).
         """
         choose_card = choose_card or self.choose_card
 
@@ -460,14 +466,14 @@ class Tute:
 
         return winning_player
 
-    def get_known_state(self, player):
+    def get_known_state(self, player: int) -> dict:
         """Returns everything the player can know about the state of the game.
 
         Args:
-            player (int): number of player
+            player (int): Number of player.
 
         Returns:
-            dict: current state known by player
+            dict: Current state known by player.
         """
         cards = tute.deck.copy()
         for other_player in range(tute.num_players):
