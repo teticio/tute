@@ -5,7 +5,6 @@
 import os
 import logging
 import argparse
-from xmlrpc.client import boolean
 
 import pandas as pd
 
@@ -401,23 +400,26 @@ class Tute:
         # To simplify we are going to "cantar" greedily.
         # Also, we are not going to allow "cantar tute".
 
-        def _have_caballo_and_rey(hand, suit):
-            return len(hand[(hand.suit == suit)
-                            & ((hand.value == 11) | (hand.value == 12))]) == 2
+        def _caballo_and_rey(hand, suit):
+            return hand[(hand.suit == suit)
+                        & ((hand.value == 11) | (hand.value == 12))]
 
         hand = self.get_hand(player)
-        if len(self.cantes) == 0 and _have_caballo_and_rey(
-                hand, self.trump_suit):
+        caballo_and_rey = _caballo_and_rey(hand, self.trump_suit)
+        if len(self.cantes) == 0 and len(caballo_and_rey) == 2:
             self.cantes[self.trump_suit] = player
+            self.shown.update(caballo_and_rey.index.tolist())
             logging.info('Player %s canta %s', player + 1,
                          self.suits[self.trump_suit])
             return
 
         for suit, _ in enumerate(self.suits):
-            if suit == self.trump_suit:
+            if suit == self.trump_suit or suit in self.cantes:
                 continue
-            if suit not in self.cantes and _have_caballo_and_rey(hand, suit):
+            caballo_and_rey = _caballo_and_rey(hand, suit)
+            if len(caballo_and_rey) == 2:
                 self.cantes[suit] = player
+                self.shown.update(caballo_and_rey.index.tolist())
                 logging.info('Player %s canta %s', player + 1,
                              self.suits[suit])
                 return
