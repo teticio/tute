@@ -235,7 +235,7 @@ class Tute:
 
         Args:
             hand (Series): cards in hand
-            possible_cards (List): list of possible card indices
+            possible_cards (list): list of possible card indices
         """
         Tute.show_cards(hand, with_index=True)
 
@@ -328,7 +328,7 @@ class Tute:
             hand (Series): cards in hand
 
         Returns:
-            List: list of possible card indices
+            list: list of possible card indices
         """
         follow_suit = self.get_follow_suit()
         if not follow_suit or len(face_up) == 0:
@@ -459,6 +459,34 @@ class Tute:
                 self.last_trick_winner = winning_player
 
         return winning_player
+
+    def get_known_state(self, player):
+        """Returns everything the player can know about the state of the game.
+
+        Args:
+            player (int): number of player
+
+        Returns:
+            dict: current state known by player
+        """
+        cards = tute.deck.copy()
+        for other_player in range(tute.num_players):
+            if other_player == player:
+                continue
+
+            cards.loc[(cards.location == tute.locations['pile']),
+                      'location'] = tute.locations['unknown']
+
+            cards.loc[(cards.location ==
+                       tute.locations[f'player {other_player + 1} hand']) &
+                      (~cards.index.isin(self.shown)),
+                      'location'] = tute.locations['unknown']
+
+        return {
+            'suit': self.suit,
+            'trump_suit': self.trump_suit,
+            'locations': cards.sort_index().location.to_list()
+        }
 
 
 if __name__ == '__main__':
