@@ -1,0 +1,2 @@
+pandas
+rlcard==1.0.9

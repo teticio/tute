@@ -1,7 +1,12 @@
 """Test Tute game.
 """
 import random
+
+from rlcard import make
+from rlcard.agents import RandomAgent
+
 from tute import Tute
+from tute import rlcard  # pylint: disable=unused-import
 
 
 def test_deck():
@@ -77,3 +82,12 @@ def test_game():
         _test_game(num_players=2, habanero=True)
         for num_players in range(2, 5):
             _test_game(num_players=num_players, habanero=False)
+
+
+def test_rlcard():
+    """Test RLCard
+    """
+    env = make('tute')
+    agent = RandomAgent(num_actions=env.num_actions)
+    env.set_agents([agent for _ in range(env.num_players)])
+    env.run(is_training=False)

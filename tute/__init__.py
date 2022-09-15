@@ -1,3 +1,3 @@
-"""tute module
+"""Tute module
 """
 from .tute import *

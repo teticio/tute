@@ -1,6 +1,8 @@
 """Tute env for RL Card.
 """
 
+from collections import OrderedDict
+
 import numpy as np
 
 from rlcard.envs import Env
@@ -8,19 +10,22 @@ from .game import TuteGame
 
 
 class TuteEnv(Env):  # pylint: disable=abstract-method
-    """GinRummy Environment.
+    """Tute Environment.
     """
 
     def __init__(self, config):
         self.name = 'tute'
         self.game = TuteGame()
+        self.num_players = self.game.num_players
 
-        # first row of state space one-hot encodes suit and trump_suit
         assert len(self.game.locations) >= 2 * len(self.game.suits)
-
-        # the following rows one-hot encode the location of each card
-        self.state_shape = (len(self.game.deck) + 1, len(self.game.locations))
-        self.action_shape = (len(self.game.deck),)
+        self.state_shape = [[
+            # first row of state space one-hot encodes suit and trump_suit
+            len(self.game.deck) + 1,
+            # the following rows one-hot encode the location of each card
+            len(self.game.locations)
+        ]] * self.num_players
+        self.action_shape = [None] * self.num_players
 
         super().__init__(config=config)
 
@@ -31,17 +36,36 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
             state (dict): dict of original state.
 
         Returns:
+            dict: encoded state
         """
-        return None  #extracted_state
+        suit = np.eye(len(self.game.suits))[self.game.suit or 0]
+        trump_suit = np.eye(len(self.game.suits))[self.game.trump_suit]
+        deck = np.eye(len(self.game.locations))[self.game.deck.location]
+        obs = np.concatenate([
+            np.concatenate([
+                suit, trump_suit,
+                np.zeros(len(self.game.locations) - 2 * len(self.game.suits))
+            ])[:, np.newaxis].transpose(), deck
+        ],
+                             axis=0)
+
+        extracted_state = {
+            'obs': obs,
+            'legal_actions': self._get_legal_actions(),
+            'raw_legal_actions':  list(self._get_legal_actions().keys())
+        }
+        extracted_state['raw_obs'] = obs
+        return extracted_state
 
     def get_payoffs(self) -> list:
         """Get the payoffs of players. Must be implemented in the child class.
 
         Returns:
-            list: A list of payoffs for each player
+            list: a list of payoffs for each player
         """
-        # determine whether game completed all moves
-        return None  #np.array(payoffs)
+        return [
+            self.game.calc_points(player) for player in range(self.num_players)
+        ]
 
     def _decode_action(self, action_id: int) -> str:
         """Action id -> the action in the game. Must be implemented in the child class.
@@ -50,14 +74,16 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
             action_id (int): The id of the action.
 
         Returns:
-            str: The action that will be passed to the game engine.
+            str: the action that will be passed to the game engine
         """
         return self.game.decode_action(action_id=action_id)
 
-    def _get_legal_actions(self) -> list:
+    def _get_legal_actions(self) -> dict:
         """Get all legal actions for current state.
 
         Returns:
-            list: A list of legal action ids.
+            dict: a list of legal action ids
         """
-        return None  #OrderedDict(legal_actions_ids)
+        legal_actions = self.game.get_legal_actions()
+        legal_actions_ids = {action: None for action in legal_actions}
+        return OrderedDict(legal_actions_ids)

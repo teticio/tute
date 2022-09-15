@@ -3,10 +3,14 @@
 # pragma pylint: disable=redefined-outer-name
 
 import os
+import logging
 import argparse
 from typing import Callable
 
 import pandas as pd
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger('tute')
 
 
 class Tute:
@@ -139,16 +143,20 @@ class Tute:
         """Move card to location.
 
         Args:
-            card (DataFrame): Card to move.
-            location (int): Location according to tute.location.
+            card (DataFrame): card to move
+            location (int): location according to tute.location
         """
+        logger.info(
+            '%s went from %s to %s', card.description,
+            dict(zip(self.locations.values(),
+                     self.locations.keys()))[card.location], location)
         self.deck.loc[card.name, 'location'] = self.locations[location]
 
     def deal(self, dealer: int = 0):
         """Deal deck.
 
         Args:
-            dealer (int): Number of player who is dealing.
+            dealer (int): number of player who is dealing
         """
         self.shuffle()
 
@@ -182,10 +190,10 @@ class Tute:
         """Get cards in location.
 
         Args:
-            location (int): Location according to tute.location.
+            location (int): location according to tute.location.
 
         Returns:
-            DataFrame: cards in location.
+            DataFrame: cards in location
         """
         return self.deck[self.deck.location == self.locations[location]]
 
@@ -196,7 +204,7 @@ class Tute:
             player (int): Number of player.
 
         Returns:
-            DataFrame: Cards in player's hand.
+            DataFrame: cards in player's hand
         """
         return self.get_cards_in(f'player {player + 1} hand')
 
@@ -204,7 +212,7 @@ class Tute:
         """Get trump card (if not in a hand).
 
         Returns:
-            DataFrame: Trump card.
+            DataFrame: trump card
         """
         return self.get_cards_in('trump')
 
@@ -212,7 +220,7 @@ class Tute:
         """Get cards in play.
 
         Returns:
-            DataFrame: Cards in play.
+            DataFrame: cards in play
         """
         return self.deck[self.deck.location.isin([
             self.locations[f'player {player + 1} face up']
@@ -224,8 +232,8 @@ class Tute:
         """Convenience method to print cards.
 
         Args:
-            cards (Series): Cards to print.
-            with_index (bool): If True, print index of each card.
+            cards (Series): cards to print
+            with_index (bool): if True, print index of each card
         """
         for index, card in enumerate(cards.T.iteritems()):
             if with_index:
@@ -238,8 +246,8 @@ class Tute:
         """Convenience method to get input from user.
 
         Args:
-            hand (Series): Cards in hand.
-            possible_cards (list): List of possible card indices.
+            hand (Series): cards in hand
+            possible_cards (list): list of possible card indices
 
         Returns:
             DataFrame: Choosen card.
@@ -280,13 +288,14 @@ class Tute:
         for card in face_up.T.iteritems():
             self.move(card[1], f'player {winning_player + 1} tricks')
 
+        logger.info('Player %d won trick', winning_player + 1)
         return winning_player
 
     def calc_points(self, player: int) -> int:
         """Tot up points for player.
 
         Args:
-            player (int): Number of player for which to calculate points.
+            player (int): number of player for which to calculate points.
         """
         points = 0
         if player == self.last_trick_winner:
@@ -303,7 +312,7 @@ class Tute:
         """Deal cards from pile, starting with player who won the trick.
 
         Args:
-            Winning_player (int): number of player who won the last trick.
+            Winning_player (int): number of player who won the last trick
         """
         to_deal = pd.concat(
             [self.get_cards_in('pile'),
@@ -322,7 +331,7 @@ class Tute:
         """Determines whether player has to follow suit or not.
 
         Returns:
-            bool: If True, suit must be followed.
+            bool: if True, suit must be followed
         """
         return not self.habanero or len(self.get_cards_in('pile')) + len(
             self.get_cards_in('trump')) < self.num_players
@@ -332,11 +341,11 @@ class Tute:
         """Determine which cards can be played from the hand.
 
         Args:
-            face_up (Series): Cards in play.
-            hand (Series): Cards in hand.
+            face_up (Series): cards in play.
+            hand (Series): cards in hand.
 
         Returns:
-            list: List of possible card indices.
+            list: list of possible card indices.
         """
         follow_suit = self.get_follow_suit()
         if not follow_suit or len(face_up) == 0:
@@ -381,8 +390,9 @@ class Tute:
                     self.shown.add(trump.name)
                     self.messages += [
                         f'Player {player + 1} swapped {trump.description} \
-                            for {trump_swap.description}'
+for {trump_swap.description}'
                     ]
+                    logger.info(self.messages[-1])
 
         trump = self.get_cards_in('trump')
         if len(trump) < 1:
@@ -404,7 +414,7 @@ class Tute:
         """Automatically "cantar".
 
         Args:
-            player (int): Number of player who is "cantando".
+            player (int): number of player who is "cantando"
         """
 
         # To simplify we are going to "cantar" greedily.
@@ -422,6 +432,7 @@ class Tute:
             self.messages += [
                 f'Player {player + 1} canta {self.suits[self.trump_suit]}'
             ]
+            logger.info(self.messages[-1])
             return
 
         for suit, _ in enumerate(self.suits):
@@ -434,17 +445,18 @@ class Tute:
                 self.messages += [
                     f'Player {player + 1} canta {self.suits[suit]}'
                 ]
+                logger.info(self.messages[-1])
                 return
 
-    def play_turn(self, player: int, choose_card: Callable = None) -> int:
-        """Play turn.
+    def pre_move(self, player) -> list:
+        """Everything in a turn before player's move.
 
         Args:
-            player (int): Mumber of player whose turn it is.
-            choose_card (function): Function to choose card (see Tute.choose_card).
-        """
-        choose_card = choose_card or self.choose_card
+            player (int): number of player whose turn it is.
 
+        Returns:
+            list: list of possible card indices
+        """
         if self.habanero:
             self.swap_trump()
 
@@ -454,14 +466,24 @@ class Tute:
             card for card, possible in enumerate(
                 self.get_possible_cards(face_up, hand)) if possible
         ]
+        return possible_cards
 
-        card = choose_card(self, hand, possible_cards)
-        self.move(card, f'player {player + 1} face up')
-        if len(face_up) == 0:
+    def post_move(self, card: pd.DataFrame) -> int:
+        """Everything in a turn after player's move.
+
+        Args:
+            card (DataFrame): cards being played
+
+        Returns:
+            int: number of trick swinning player (or None)
+        """
+
+        face_up = self.get_face_up()
+        if len(face_up) == 1:
             self.suit = card.suit
+            return None
 
         winning_player = None
-        face_up = self.get_face_up()
         if len(face_up) == self.num_players:
             winning_player = self.do_trick()
             if self.num_players != 2 or len(self.get_cards_in('pile')) > 0:
@@ -470,6 +492,20 @@ class Tute:
             if len(self.get_hand(winning_player)) == 0:
                 self.last_trick_winner = winning_player
 
+        return winning_player
+
+    def play_turn(self, player: int, choose_card: Callable = None) -> int:
+        """Play turn.
+
+        Args:
+            player (int): number of player whose turn it is.
+            choose_card (function): function to choose card (see Tute.choose_card).
+        """
+        choose_card = choose_card or self.choose_card
+        possible_cards = self.pre_move(player)
+        card = choose_card(self, self.get_hand(player), possible_cards)
+        self.move(card, f'player {player + 1} face up')
+        winning_player = self.post_move(card)
         return winning_player
 
     def retreive_messages(self) -> list:
