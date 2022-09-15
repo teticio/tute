@@ -3,13 +3,10 @@
 # pragma pylint: disable=redefined-outer-name
 
 import os
-import logging
 import argparse
 from typing import Callable
 
 import pandas as pd
-
-logging.basicConfig(format='%(message)s', level=logging.INFO)
 
 
 class Tute:
@@ -90,6 +87,7 @@ class Tute:
         self.shown = set()
         self.cantes = {}
         self.last_trick_winner = None
+        self.messages = []
 
         self.locations = {
             'unknown': 0,
@@ -158,6 +156,7 @@ class Tute:
         self.shown = set()
         self.cantes = {}
         self.last_trick_winner = None
+        self.messages = []
 
         dealt = 0
         player = (dealer + 1) % self.num_players
@@ -241,6 +240,9 @@ class Tute:
         Args:
             hand (Series): Cards in hand.
             possible_cards (list): List of possible card indices.
+
+        Returns:
+            DataFrame: Choosen card.
         """
         Tute.show_cards(hand, with_index=True)
 
@@ -377,8 +379,10 @@ class Tute:
                                   'location'] = self.locations[
                                       f'player {player + 1} hand']
                     self.shown.add(trump.name)
-                    logging.info('Player %s swapped %s for %s', player + 1,
-                                 trump.description, trump_swap.description)
+                    self.messages += [
+                        f'Player {player + 1} swapped {trump.description} \
+                            for {trump_swap.description}'
+                    ]
 
         trump = self.get_cards_in('trump')
         if len(trump) < 1:
@@ -415,8 +419,9 @@ class Tute:
         if len(self.cantes) == 0 and len(caballo_and_rey) == 2:
             self.cantes[self.trump_suit] = player
             self.shown.update(caballo_and_rey.index.tolist())
-            logging.info('Player %s canta %s', player + 1,
-                         self.suits[self.trump_suit])
+            self.messages += [
+                f'Player {player + 1} canta {self.suits[self.trump_suit]}'
+            ]
             return
 
         for suit, _ in enumerate(self.suits):
@@ -426,8 +431,9 @@ class Tute:
             if len(caballo_and_rey) == 2:
                 self.cantes[suit] = player
                 self.shown.update(caballo_and_rey.index.tolist())
-                logging.info('Player %s canta %s', player + 1,
-                             self.suits[suit])
+                self.messages += [
+                    f'Player {player + 1} canta {self.suits[suit]}'
+                ]
                 return
 
     def play_turn(self, player: int, choose_card: Callable = None) -> int:
@@ -466,33 +472,22 @@ class Tute:
 
         return winning_player
 
-    def get_known_state(self, player: int) -> dict:
-        """Returns everything the player can know about the state of the game.
-
-        Args:
-            player (int): Number of player.
+    def retreive_messages(self) -> list:
+        """Retrieve messages such as cantes etc. Also clears message list.
 
         Returns:
-            dict: Current state known by player.
+            list: List of string messages
         """
-        cards = tute.deck.copy()
-        for other_player in range(tute.num_players):
-            if other_player == player:
-                continue
+        messages = self.messages
+        self.messages = []
+        return messages
 
-            cards.loc[(cards.location == tute.locations['pile']),
-                      'location'] = tute.locations['unknown']
-
-            cards.loc[(cards.location ==
-                       tute.locations[f'player {other_player + 1} hand']) &
-                      (~cards.index.isin(self.shown)),
-                      'location'] = tute.locations['unknown']
-
-        return {
-            'suit': self.suit,
-            'trump_suit': self.trump_suit,
-            'locations': cards.sort_index().location.to_list()
-        }
+    @staticmethod
+    def show_messages(messages: list):
+        """Convenience method to print messages.
+        """
+        for message in messages:
+            print(message)
 
 
 if __name__ == '__main__':
@@ -528,6 +523,11 @@ if __name__ == '__main__':
 
         if tute.get_follow_suit():
             print('Follow suit')
+            print()
+
+        messages = tute.retreive_messages()
+        if len(messages) > 0:
+            tute.show_messages(messages)
             print()
 
         print(f'Player {player + 1}')
