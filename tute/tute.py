@@ -569,14 +569,6 @@ if __name__ == '__main__':
         winning_player = tute.play_turn(player=player)
         print()
 
-        if winning_player is not None:
-            print(f'Player {winning_player + 1} won trick')
-            print(f'Points: {tute.calc_points(winning_player)}')
-            print()
-            player = winning_player
-        else:
-            player = (player + 1) % tute.num_players
-
         input('Press any key to change player ')
         os.system('cls' if os.name == 'nt' else 'clear')
 
