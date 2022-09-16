@@ -38,9 +38,9 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
         Returns:
             dict: encoded state
         """
-        suit = np.eye(len(self.game.suits))[self.game.suit or 0]
-        trump_suit = np.eye(len(self.game.suits))[self.game.trump_suit]
-        deck = np.eye(len(self.game.locations))[self.game.deck.location]
+        suit = np.eye(len(self.game.suits))[state['suit'] or 0]
+        trump_suit = np.eye(len(self.game.suits))[state['trump_suit']]
+        deck = np.eye(len(self.game.locations))[state['locations']]
         obs = np.concatenate([
             np.concatenate([
                 suit, trump_suit,

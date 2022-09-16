@@ -34,9 +34,15 @@ class TuteGame(Tute):
             dict: next player state
             int: next player
         """
-        assert card.location == self.locations[f'player {self.current_player + 1} hand']
+        assert card.location == self.locations[
+            f'player {self.current_player + 1} hand']
+        self.messages += [
+            f'Player {self.current_player + 1} played {card.description}'
+        ]
         self.move(card, f'player {self.current_player + 1} face up')
         winning_player = self.post_move(card)
+        if winning_player is not None:
+            self.messages += [f'Player {winning_player + 1} won trick']
         self.current_player = winning_player or (self.current_player +
                                                  1) % self.num_players
         return self.get_state(self.current_player), self.current_player

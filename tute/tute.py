@@ -146,7 +146,7 @@ class Tute:
             card (DataFrame): card to move
             location (int): location according to tute.location
         """
-        logger.info(
+        logger.debug(
             '%s went from %s to %s', card.description,
             dict(zip(self.locations.values(),
                      self.locations.keys()))[card.location], location)
@@ -288,7 +288,6 @@ class Tute:
         for card in face_up.T.iteritems():
             self.move(card[1], f'player {winning_player + 1} tricks')
 
-        logger.info('Player %d won trick', winning_player + 1)
         return winning_player
 
     def calc_points(self, player: int) -> int:
@@ -392,7 +391,6 @@ class Tute:
                         f'Player {player + 1} swapped {trump.description} \
 for {trump_swap.description}'
                     ]
-                    logger.info(self.messages[-1])
 
         trump = self.get_cards_in('trump')
         if len(trump) < 1:
@@ -432,7 +430,6 @@ for {trump_swap.description}'
             self.messages += [
                 f'Player {player + 1} canta {self.suits[self.trump_suit]}'
             ]
-            logger.info(self.messages[-1])
             return
 
         for suit, _ in enumerate(self.suits):
@@ -445,7 +442,6 @@ for {trump_swap.description}'
                 self.messages += [
                     f'Player {player + 1} canta {self.suits[suit]}'
                 ]
-                logger.info(self.messages[-1])
                 return
 
     def pre_move(self, player) -> list:
@@ -504,8 +500,11 @@ for {trump_swap.description}'
         choose_card = choose_card or self.choose_card
         possible_cards = self.pre_move(player)
         card = choose_card(self, self.get_hand(player), possible_cards)
+        self.messages += [f'Player {player + 1} played {card.description}']
         self.move(card, f'player {player + 1} face up')
         winning_player = self.post_move(card)
+        if winning_player is not None:
+            self.messages += [f'Player {winning_player + 1} won trick']
         return winning_player
 
     def retreive_messages(self) -> list:
