@@ -31,11 +31,13 @@ class TuteHumanAgent(object):
             self.tute.show_messages(messages)
             print()
 
+        print('\n================= Trump =================')
         trump = self.tute.get_cards_in('trump')
         if len(trump) > 0:
-            print('\n================= Trump =================')
             self.tute.show_cards(trump)
-            print()
+        else:
+            print(self.tute.suits[self.tute.trump_suit])
+        print()
 
         face_up = self.tute.get_face_up()
         if len(face_up) > 0:

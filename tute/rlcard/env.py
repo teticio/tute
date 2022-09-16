@@ -52,7 +52,7 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
         extracted_state = {
             'obs': obs,
             'legal_actions': self._get_legal_actions(),
-            'raw_legal_actions':  list(self._get_legal_actions().keys())
+            'raw_legal_actions': list(self._get_legal_actions().keys())
         }
         extracted_state['raw_obs'] = obs
         return extracted_state
@@ -63,9 +63,9 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
         Returns:
             list: a list of payoffs for each player
         """
-        return [
+        return np.array([
             self.game.calc_points(player) for player in range(self.num_players)
-        ]
+        ])
 
     def _decode_action(self, action_id: int) -> str:
         """Action id -> the action in the game. Must be implemented in the child class.

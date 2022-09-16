@@ -542,6 +542,11 @@ if __name__ == '__main__':
 
     player = 0  # pylint: disable=invalid-name
     while len(tute.get_hand(player)) > 0:
+        messages = tute.retreive_messages()
+        if len(messages) > 0:
+            tute.show_messages(messages)
+            print()
+
         print('Trump')
         trump = tute.get_trump()
         if len(trump) > 0:
@@ -558,11 +563,6 @@ if __name__ == '__main__':
 
         if tute.get_follow_suit():
             print('Follow suit')
-            print()
-
-        messages = tute.retreive_messages()
-        if len(messages) > 0:
-            tute.show_messages(messages)
             print()
 
         print(f'Player {player + 1}')

@@ -43,8 +43,9 @@ class TuteGame(Tute):
         winning_player = self.post_move(card)
         if winning_player is not None:
             self.messages += [f'Player {winning_player + 1} won trick']
-        self.current_player = winning_player or (self.current_player +
-                                                 1) % self.num_players
+            self.current_player = winning_player
+        else:
+            self.current_player = (self.current_player + 1) % self.num_players
         return self.get_state(self.current_player), self.current_player
 
     def step_back(self):
