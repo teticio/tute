@@ -272,8 +272,8 @@ class Tute:
         for player in range(self.num_players):
             card = self.get_cards_in(f'player {player + 1} face up').iloc[0]
 
-            if card.suit == self.suit and (highest_ranking is None
-                                           or card.ranking < highest_ranking):
+            if highest_ranking_trump is None and card.suit == self.suit and (
+                    highest_ranking is None or card.ranking < highest_ranking):
                 highest_ranking = card.ranking
                 winning_player = player
                 continue

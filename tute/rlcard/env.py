@@ -18,9 +18,9 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
         self.game = TuteGame()
         self.num_players = self.game.num_players
 
-        assert len(self.game.locations) >= 2 * len(self.game.suits)
+        assert len(self.game.locations) >= 2 * len(self.game.suits) + 1
         self.state_shape = [[
-            # first row of state space one-hot encodes suit and trump_suit
+            # first row of state space one-hot encodes suit and trump_suit and follow_suit
             len(self.game.deck) + 1,
             # the following rows one-hot encode the location of each card
             len(self.game.locations)
@@ -41,10 +41,12 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
         suit = np.eye(len(self.game.suits))[state['suit'] or 0]
         trump_suit = np.eye(len(self.game.suits))[state['trump_suit']]
         deck = np.eye(len(self.game.locations))[state['locations']]
+        follow_suit = [self.game.get_follow_suit()]
         obs = np.concatenate([
             np.concatenate([
-                suit, trump_suit,
-                np.zeros(len(self.game.locations) - 2 * len(self.game.suits))
+                suit, trump_suit, follow_suit,
+                np.zeros(
+                    len(self.game.locations) - 2 * len(self.game.suits) - 1)
             ])[:, np.newaxis].transpose(), deck
         ],
                              axis=0)
