@@ -25,7 +25,7 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
             # the following rows one-hot encode the location of each card
             len(self.game.locations)
         ]] * self.num_players
-        self.action_shape = [None] * self.num_players
+        self.action_shape = [[len(self.game.deck)]] * self.num_players
 
         super().__init__(config=config)
 
