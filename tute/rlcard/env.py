@@ -20,10 +20,10 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
 
         assert len(self.game.locations) >= 2 * len(self.game.suits) + 1
         self.state_shape = [[
+            len(self.game.locations),
             # first row of state space one-hot encodes suit and trump_suit and follow_suit
-            len(self.game.deck) + 1,
             # the following rows one-hot encode the location of each card
-            len(self.game.locations)
+            len(self.game.deck) + 1
         ]] * self.num_players
         self.action_shape = [[len(self.game.deck)]] * self.num_players
 
@@ -49,7 +49,7 @@ class TuteEnv(Env):  # pylint: disable=abstract-method
                     len(self.game.locations) - 2 * len(self.game.suits) - 1)
             ])[:, np.newaxis].transpose(), deck
         ],
-                             axis=0)
+                             axis=0).transpose()
 
         extracted_state = {
             'obs': obs,
