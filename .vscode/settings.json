@@ -6,5 +6,10 @@
     "python.testing.pytestEnabled": true,
     "python.formatting.provider": "yapf",
     "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true
+    "python.linting.pylintEnabled": true,
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/../open_spiel",
+        "${workspaceFolder}/../open_spiel/open_spiel/abseil-cpp"        
+    ]
 }
