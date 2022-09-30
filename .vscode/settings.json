@@ -8,7 +8,7 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "C_Cpp.default.includePath": [
-        "${workspaceFolder}/uild/open_spiel",
+        "${workspaceFolder}/build/open_spiel",
         "${workspaceFolder}/build/open_spiel/open_spiel/abseil-cpp",
         "${workspaceFolder}/build/open_spiel/open_spiel/libtorch/libtorch/include",
         "${workspaceFolder}build/open_spiel/open_spiel/libtorch/libtorch/include/torch/csrc/api/include",
