@@ -18,7 +18,7 @@ debug: build ## build debug version
 
 .PHONY: run
 run: ## run project
-	@./build/dqn
+	@build/tute-prefix/src/tute-build/dqn
 
 .PHONY: test
 test: ## test project
