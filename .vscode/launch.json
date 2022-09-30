@@ -1,36 +1,56 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Debug tute_test",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/games/tute_test",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "setupCommands": [
         {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false
-        },
+          "description": "Additional libs for gdb",
+          "text": "set solib-search-path sharedLibraryPath/lib",
+          "ignoreFailures": true
+        }
+      ],
+    },
+    {
+      "name": "Debug dqn",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/open_spiel/build/dqn",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "setupCommands": [
         {
-            "name": "Debug tute_test",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/games/tute_test",
-            "args": [],
-            "stopAtEntry": true,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gdb",
-            "setupCommands": [
-              {
-                "description": "Additional libs for gdb",
-                "text": "set solib-search-path sharedLibraryPath/lib",
-                "ignoreFailures": true
-              }
-            ],
-          }
-    ]
+          "description": "Additional libs for gdb",
+          "text": "set solib-search-path sharedLibraryPath/lib",
+          "ignoreFailures": true
+        }
+      ],
+    }
+  ]
 }

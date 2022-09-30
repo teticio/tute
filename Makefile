@@ -1,16 +1,30 @@
-OPEN_SPIEL := ../open_spiel
+.PHONY: help
+help: ## show help message
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  \033[36m\033[0m\n"} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-tute_test: build/libopen_spiel.so
-	clang++ -I. -I$(OPEN_SPIEL) -I$(OPEN_SPIEL)/open_spiel/abseil-cpp \
-		-Lbuild -lopen_spiel -std=c++17 -g -Og \
-		-o tute_test open_spiel/games/tute.cc open_spiel/games/tute_test.cc
-	chmod +x tute_test
+.PHONY: build
+build: build ## build project
+	@mkdir -p build; \
+	cd build; \
+	cmake .. && \
+	make -j$(nproc)
 
-build/libopen_spiel.so:
-	cd build; BUILD_TYPE=Debug BUILD_SHARED_LIB=ON CXX=clang++ cmake \
-		-DPython3_EXECUTABLE=$(which python3) -DCMAKE_CXX_COMPILER=${CXX} \
-		../$(OPEN_SPIEL)/open_spiel
-	cd build; make -j$(nproc) open_spiel
+.PHONY: debug
+debug: build ## build debug version
+	@mkdir -p build; \
+	cd build; \
+	BUILD_TYPE=Debug cmake .. && \
+	make -j$(nproc)
 
-run: tute_test
-	LD_LIBRARY_PATH=build ./tute_test
+.PHONY: run
+run: ## run project
+	@./build/dqn
+
+.PHONY: test
+test: ## test project
+	@cd build; \
+	ctest
+
+.PHONY: clean
+clean: ## clean build directory
+	@rm -rf open_spiel/build

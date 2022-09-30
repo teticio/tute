@@ -8,8 +8,12 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "C_Cpp.default.includePath": [
-        "${workspaceFolder}",
-        "${workspaceFolder}/../open_spiel",
-        "${workspaceFolder}/../open_spiel/open_spiel/abseil-cpp"        
-    ]
+        "${workspaceFolder}/uild/open_spiel",
+        "${workspaceFolder}/build/open_spiel/open_spiel/abseil-cpp",
+        "${workspaceFolder}/build/open_spiel/open_spiel/libtorch/libtorch/include",
+        "${workspaceFolder}build/open_spiel/open_spiel/libtorch/libtorch/include/torch/csrc/api/include",
+        "${workspaceFolder}"
+    ],
+    "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+    "cmake.sourceDirectory": "${workspaceFolder}"
 }
