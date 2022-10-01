@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(dqn_torch_test)
+project(dqn)
 enable_testing()
+
+set (BUILD_TYPE $ENV{BUILD_TYPE})
+if(${BUILD_TYPE} STREQUAL "Debug")
+  # Basic build for debugging (default).
+  # -Og enables optimizations that do not interfere with debugging.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og")
+endif()
 
 set(OPEN_SPIEL_LIB ${OPEN_SPIEL_BINARY_DIR}/libopen_spiel.so)
 set(DQN_DIR ${OPEN_SPIEL_BINARY_DIR}/algorithms/dqn_torch/CMakeFiles/dqn_torch.dir)

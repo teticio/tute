@@ -156,6 +156,7 @@ void TestHanabi() {
 namespace torch_dqn = open_spiel::algorithms::torch_dqn;
 
 int main(int args, char** argv) {
+  std::cout << torch::cuda::is_available();
   torch::manual_seed(torch_dqn::kSeed);
   torch_dqn::TestSimpleGame();
   torch_dqn::TestTicTacToe();
