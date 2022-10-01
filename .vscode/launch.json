@@ -33,10 +33,10 @@
       ],
     },
     {
-      "name": "Debug dqn",
+      "name": "Debug tute_game",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/tute-prefix/src/tute-build/dqn",
+      "program": "${workspaceFolder}/build/tute-prefix/src/tute-build/tute_game",
       "args": [],
       "stopAtEntry": true,
       "cwd": "${workspaceFolder}",

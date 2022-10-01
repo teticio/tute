@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(dqn)
+project(tute_game)
 enable_testing()
 
 set (BUILD_TYPE $ENV{BUILD_TYPE})
@@ -25,5 +25,5 @@ add_subdirectory(games)
 list(APPEND CMAKE_PREFIX_PATH ${TORCH_DIR})
 find_package(Torch REQUIRED)
 
-add_executable(dqn dqn.cc)
-target_link_libraries(dqn ${TORCH_LIBRARIES} ${OPEN_SPIEL_LIB} ${DQN_OBJS})
+add_executable(tute_game tute_game.cc)
+target_link_libraries(tute_game ${TORCH_LIBRARIES} ${OPEN_SPIEL_LIB} ${DQN_OBJS})
