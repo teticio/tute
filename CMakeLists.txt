@@ -2,15 +2,18 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(tute)
 
 # Set default build type.
-set (BUILD_TYPE $ENV{BUILD_TYPE})
+set(BUILD_TYPE $ENV{BUILD_TYPE})
+
 if(NOT BUILD_TYPE)
-   set(BUILD_TYPE Release)
+  set(BUILD_TYPE Release)
 endif()
+
 message("Current build type is: ${BUILD_TYPE}")
 
-# download, build and add OpenSpiel
 include(ExternalProject)
-ExternalProject_Add(open_spiel_lib
+
+# Download, build and add OpenSpiel
+ExternalProject_Add(open_spiel
   GIT_REPOSITORY https://github.com/deepmind/open_spiel.git
   GIT_TAG master
   SOURCE_DIR ${CMAKE_BINARY_DIR}/open_spiel
@@ -31,12 +34,11 @@ ExternalProject_Add(open_spiel_lib
   BUILD_COMMAND make -j$(nproc) open_spiel dqn_torch
   INSTALL_COMMAND ""
 )
-ExternalProject_Get_Property(open_spiel_lib SOURCE_DIR BINARY_DIR)
+ExternalProject_Get_Property(open_spiel SOURCE_DIR BINARY_DIR)
 
 # Add this project as an external project to ensure dependencies have been built.
-include(ExternalProject)
 ExternalProject_Add(tute
-  DEPENDS open_spiel_lib
+  DEPENDS open_spiel
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/open_spiel
   CONFIGURE_COMMAND
   BUILD_TYPE=${BUILD_TYPE}
@@ -45,6 +47,7 @@ ExternalProject_Add(tute
   -DCMAKE_CXX_STANDARD=17
   -DOPEN_SPIEL_BINARY_DIR=${BINARY_DIR}
   -DOPEN_SPIEL_SOURCE_DIR=${SOURCE_DIR}
+  -DTorch_DIR=${SOURCE_DIR}/open_spiel/libtorch/libtorch/share/cmake/Torch
   <SOURCE_DIR>
   INSTALL_COMMAND ""
 )

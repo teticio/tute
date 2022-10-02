@@ -41,7 +41,7 @@ void BasicGameTests() {
 void ShootTheMoonTest() {
   GameParameters params;
   std::shared_ptr<const open_spiel::Game> game =
-      open_spiel::LoadGame("hearts", params);
+      open_spiel::LoadGame("tute", params);
   std::unique_ptr<open_spiel::State> state = game->NewInitialState();
   std::vector<Action> actions;
   actions = {static_cast<int>(PassDir::kNoPass),
@@ -262,7 +262,7 @@ void InformationStateTensorTest(int num_games = 100) {
   GameParameters params;
   params["jd_bonus"] = GameParameter(true);
   std::shared_ptr<const open_spiel::Game> game =
-      open_spiel::LoadGame("hearts", params);
+      open_spiel::LoadGame("tute", params);
   for (int i = 0; i < num_games; ++i) {
     std::unique_ptr<open_spiel::State> state = game->NewInitialState();
     while (!state->IsTerminal()) {
