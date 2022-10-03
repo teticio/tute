@@ -101,6 +101,8 @@ class DQN : public Agent {
   Action Step(const State& state, bool is_evaluation = false) override;
 
   double GetEpsilon(bool is_evaluation, int power = 1.0);
+  double GetStepCounter() const { return step_counter_; }
+  void SetStepCounter(double step) { step_counter_ = step; }
   int seed() const { return seed_; }
 
   // Load checkpoint/trained model and optimizer

@@ -66,14 +66,6 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
     random_agents.push_back(std::make_unique<RandomAgent>(p, rand_agent_seed));
   }
 
-  // Load.
-  try {
-    for (Player p = 0; p < game->NumPlayers(); ++p) {
-      dqn_agents[p].get()->Load("model_" + std::to_string(p));
-    }
-  }
-  catch (...) {}
-
   for (int num_episodes = 0; num_episodes < total_episodes;
        num_episodes += report_every) {
     for (Player p = 0; p < game->NumPlayers(); ++p) {
@@ -103,11 +95,6 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
           &rng, *game, agents,
           /*num_episodes*/ num_eval_episodes, /*is_evaluation*/ true);
       avg_returns_vs_random[p] = avg_returns[p];
-
-      // Save.
-      for (Player p = 0; p < game->NumPlayers(); ++p) {
-        dqn_agents[p].get()->Save("model_" + std::to_string(p));
-      }
     }
 
     std::cout << num_episodes + report_every << " self-play returns: ";
@@ -119,6 +106,14 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
       std::cout << avg_returns_vs_random[p] << " ";
     }
     std::cout << std::endl;
+
+    // Save.
+    std::cout << "Step: " << dqn_agents[0].get()->GetStepCounter() << ", ";
+    std::cout << "Epsilon: " << dqn_agents[0].get()->GetEpsilon(false) << std::endl;
+    for (Player p = 0; p < game->NumPlayers(); ++p) {
+      dqn_agents[p].get()->Save("model_" + std::to_string(p),
+                                "optimizer_" + std::to_string(p));
+    }
   }
 }
 
