@@ -48,7 +48,7 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
         /*player_id*/ p,
         /*state_representation_size*/ game->InformationStateTensorShape()[0],
         /*num_actions*/ game->NumDistinctActions(),
-        /*hidden_layers_sizes*/ {32, 32},
+        /*hidden_layers_sizes*/ {64, 64},
         /*replay_buffer_capacity*/ 100000,
         /*batch_size*/ 128,
         /*learning_rate*/ 0.01,
@@ -60,11 +60,19 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
         /*epsilon_end*/ 0.1,
         /*epsilon_decay_duration*/ 50000,
         /*loss_str*/ "mse",
-        /*device*/ torch::kCUDA};
+        /*device*/ torch::cuda::is_available()? torch::kCUDA : torch::kCPU};
     dqn_agents.push_back(std::make_unique<DQN>(settings));
     int rand_agent_seed = absl::Uniform<int>(rng, 0, 1000000);
     random_agents.push_back(std::make_unique<RandomAgent>(p, rand_agent_seed));
   }
+
+  // Load.
+  try {
+    for (Player p = 0; p < game->NumPlayers(); ++p) {
+      dqn_agents[p].get()->Load("model_" + std::to_string(p));
+    }
+  }
+  catch (...) {}
 
   for (int num_episodes = 0; num_episodes < total_episodes;
        num_episodes += report_every) {
@@ -95,6 +103,11 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
           &rng, *game, agents,
           /*num_episodes*/ num_eval_episodes, /*is_evaluation*/ true);
       avg_returns_vs_random[p] = avg_returns[p];
+
+      // Save.
+      for (Player p = 0; p < game->NumPlayers(); ++p) {
+        dqn_agents[p].get()->Save("model_" + std::to_string(p));
+      }
     }
 
     std::cout << num_episodes + report_every << " self-play returns: ";
