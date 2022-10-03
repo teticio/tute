@@ -39,7 +39,6 @@ ExternalProject_Add(tute
   OPEN_SPIEL_BUILD_WITH_LIBNOP=ON
   ${CMAKE_COMMAND}
   -DCMAKE_CXX_COMPILER=clang++
-  -DCMAKE_CXX_STANDARD=17
   -DOPEN_SPIEL_BINARY_DIR=${BINARY_DIR}
   -DOPEN_SPIEL_SOURCE_DIR=${SOURCE_DIR}
   -DTorch_DIR=${SOURCE_DIR}/open_spiel/libtorch/libtorch/share/cmake/Torch

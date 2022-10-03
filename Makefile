@@ -23,7 +23,7 @@ run: ## run project
 .PHONY: test
 test: ## test project
 	@cd build/tute-prefix/src/tute-build; \
-	ctest
+	ctest -R tute_test
 
 .PHONY: clean
 clean: ## clean build directory

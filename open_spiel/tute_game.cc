@@ -58,7 +58,9 @@ void SelfPlayTute(int seed, int total_episodes, int report_every,
         /*min_buffer_size_to_learn*/ 1000,
         /*epsilon_start*/ 1.0,
         /*epsilon_end*/ 0.1,
-        /*epsilon_decay_duration*/ 50000};
+        /*epsilon_decay_duration*/ 50000,
+        /*loss_str*/ "mse",
+        /*device*/ torch::kCUDA};
     dqn_agents.push_back(std::make_unique<DQN>(settings));
     int rand_agent_seed = absl::Uniform<int>(rng, 0, 1000000);
     random_agents.push_back(std::make_unique<RandomAgent>(p, rand_agent_seed));
