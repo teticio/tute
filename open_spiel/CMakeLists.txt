@@ -28,15 +28,12 @@ include_directories(${TORCH_INCLUDE_DIRS})
 # Tute
 add_subdirectory(games)
 
-# DQN
-add_subdirectory(algorithms)
-
 # Tute game
 add_executable(tute_game tute_game.cc)
 target_link_libraries(tute_game
   tute
   absl::flags # Have to link absl::flags and absl::flags_parse separately.
   absl::flags_parse
-  _dqn_torch
+  dqn_torch
   open_spiel
   ${TORCH_LIBRARIES})

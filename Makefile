@@ -16,8 +16,12 @@ debug: ## build debug version
 	BUILD_TYPE=Debug cmake .. && \
 	make -j$(nproc)
 
-.PHONY: run
-run: ## run project
+.PHONY: train
+train: ## train model
+	@build/tute-prefix/src/tute-build/tute_game --train
+
+.PHONY: play
+play: ## play game
 	@build/tute-prefix/src/tute-build/tute_game
 
 .PHONY: test

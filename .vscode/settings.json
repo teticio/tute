@@ -15,5 +15,6 @@
         "${workspaceFolder}/build/open_spiel/open_spiel/libtorch/libtorch/include/torch/csrc/api/include"
     ],
     "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
-    "cmake.sourceDirectory": "${workspaceFolder}"
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "search.useIgnoreFiles": false
 }
