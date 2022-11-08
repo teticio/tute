@@ -1,5 +1,5 @@
 # tute
-Tute card game
+Tute card game (WIP)
 
 See https://www.ludoteka.com/clasika/tute.html and https://www.ludoteka.com/clasika/tute-habanero.html for rules (in Spanish).
 
